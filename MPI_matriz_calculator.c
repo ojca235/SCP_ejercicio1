@@ -8,191 +8,179 @@ int main(int argc, char *argv[])
 {
 	FILE *fileA;
 	FILE *fileB;
-	FILE *resfile;
+	FILE *fileC;
 	char *fileAname= "matriz1.txt",*fileBname= "matriz2.txt",*resfilename= "MPI_matriz_res.txt";
-	int rank, size;
+	int myrank, size;
 	int colA,rowA,colB,rowB;
-	int partrow,fracrow;
+	int nRows,restodematriz;
 	int *matrizbufA,*matrizbufC;
 	int *matrizA,*matrizB,*matrizres;
-	int sum = 0;
-	int i,j,k;
-	int aux;
+	int sum,aux,i,j,k;
 	double t0,t1;
 	
 
-	MPI_Init(&argc, &argv); //to initial MPI with argument | ex. argument = 1, argc = 1, argv(vector) = "1"
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank); //ID of processor
-	MPI_Comm_size(MPI_COMM_WORLD, &size); //amount of processor
+	MPI_Init(&argc, &argv); //llamada a la funcion de MPI que hace que se inicialice
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank); //Se le da cada procesador su rank que es el equivalente a su id
+	MPI_Comm_size(MPI_COMM_WORLD, &size); //Numero total de procesadores que hay
 
-	if(rank==0)
+	if(myrank==0) 
 	{
-		//open file
+		//En caso de ser el procesador root qque equivale al que tiene rank cero lo que hará es leer los dos ficheros para inicializar las dos matrices que se van a multiplicar
 		fileA = fopen(fileAname,"r");
 		fileB = fopen(fileBname,"r");
-		if(!fileA || !fileB){
+		if(fileA==NULL || fileB==NULL) // Se comprueba que no haya habido ningun error al abrir los ficheros
+		{
 			printf("No se ha encontrado el fichero matriz1.txt o matriz2.txt, asegurese de haber ejecutado el programa que genera matrices.\n");
 			return 0;
 		}
 		else
-		{
-			printf("Abriendo las dos ficheros.\n");
+		{//En caso de que se haya abierto correctamente lols ficheros entonces lo que se hara es leerlos para crear las matrices
+			printf("Abriendo las dos ficheros.\n");// Imprimimos por pantalla que estamos en el paso de abrir los ficheros para inicializar las matrices
 
-			fscanf(fileA, "%d %d",&rowA,&colA);
-			fscanf(fileB, "%d %d",&rowB,&colB);
-			if (colA!=rowB)
+			fscanf(fileA, "%d %d",&rowA,&colA);//Leemos del primer fichero sus dimensiones
+			fscanf(fileB, "%d %d",&rowB,&colB);//Leemos del segundo fichero sus dimendsiones
+			if (colA!=rowB)//Comprobacion de que la columna de la primera matriz A sea igual a la de la matriz B para poder multiplicar
 			{
 				printf("Las matrices que se estan intentado multiplicar no es posible multiplicarlas, la razón es que columna de matriz1 es %d y las filas de la matriz2 es.\n",colA,rowB);
 				return 0;
 			}
 			else
 			{
-				//repartición de columnas
-				partrow=rowA/size;
-				fracrow=rowA%size;
+				//Una vez comprobado de que se puede multiplicar lo que se hará es repartir las filas
+				nRows=rowA/size;//Se reparte las filas entre el numero de procesadores, es decir, cunatas filas le corresponde a cada procesador
+				restodematriz=rowA%size;//Se comprueba que despues de haber
 
-				//allocate matrix
+				//mediante malloc reservamos dinamicamente el espacio necesario para las matrices en el procesador 0 
 				matrizA = (int*)malloc(rowA * colA * sizeof(int));
 				matrizB = (int*)malloc(rowB * colB * sizeof(int));
 				matrizres = (int*)malloc(rowA * colB * sizeof(int));
 
-
-				//read matrixA
+				//Lectura de la primera matriz
 				while (!feof(fileA))
 					for(i=0; i<rowA; i++)
 						for(j=0; j<colA; j++)
 							fscanf(fileA, "%d", &matrizA[(i*colA)+j]);
 
-				//read matrixB with transposing
+				//Lectura de la segunda matriz pero en este caso la transponemos
 				while (!feof(fileB))
 					for(i=0; i<rowB; i++)
 						for(j=0; j<colB; j++)
 							fscanf(fileB, "%d", &matrizB[j*(rowB)+i]);
 
-				//swap row-col
+				//Al transponer la matriz B entonces debemos transponer los valores de la fila y la columna
 				aux=rowB;
 				rowB=colB;
 				colB=aux;
 
-				printf("read A B successful\n");
-
-				//close file
+				//Cierre de los dos archivos que se han abierto
 				fclose(fileA);
 				fclose(fileB);
 			}
 		}
 	}
-
+	//Empezamos a cornometrar antes de enviar los datos al resto de procesadores
 	t0 = MPI_Wtime();
 
-	MPI_Bcast(&partrow,1,MPI_INT,0,MPI_COMM_WORLD);
+	//Se les envia al resto de procesadores las variables necesarias para poder realizar su parte
+	MPI_Bcast(&nRows,1,MPI_INT,0,MPI_COMM_WORLD);
 	MPI_Bcast(&rowA,1,MPI_INT,0,MPI_COMM_WORLD);
 	MPI_Bcast(&colA,1,MPI_INT,0,MPI_COMM_WORLD);
 	MPI_Bcast(&rowB,1,MPI_INT,0,MPI_COMM_WORLD);
 	MPI_Bcast(&colB,1,MPI_INT,0,MPI_COMM_WORLD);
-	printf("bcast finish! from rank %d\n",rank);
 
-	if (rank!=0)
+	if (myrank!=0)
 	{
+		//Todos los procesadores que no sean el procesador root reservaran espacio con malloc para almacenar las matriz B entera más las filas que le corresponde de la matriz A
 		matrizB = (int*)malloc(rowB * colB * sizeof(int));
-		matrizbufA = (int*)malloc(partrow * colA * sizeof(int));
+		matrizbufA = (int*)malloc(nRows * colA * sizeof(int));
 	}
-
+	// El procesador root hara broadcast de la matriz B 
 	MPI_Bcast(&matrizB[0],rowB*colB,MPI_INT,0,MPI_COMM_WORLD);
-	printf("Gotcha! matrix B from rank %d\n",rank);
+	//mediante malloc se reservara dinamicamente espacio en todos los procesadores el espacio justo y necesario para guardar la parte de multiplicación que le corresponde
+	matrizbufC = (int*)malloc(nRows * rowB * sizeof(int));
 
-	matrizbufC = (int*)malloc(partrow * rowB * sizeof(int));
-
-	if(rank==0){
-		//send matrix A
-		for (i=1; i<size; i++) {
-			MPI_Send(&matrizA[partrow*colA*i],partrow*colA, MPI_INT, i, 0, MPI_COMM_WORLD);
+	if(myrank==0)
+	{
+		//El proceso root se encargará de repartir la matriz A entre todos los procesadores
+		for (i=1; i<size; i++) 
+		{
+			MPI_Send(&matrizA[nRows*colA*i],nRows*colA, MPI_INT, i, 0, MPI_COMM_WORLD);
 		}
-		printf("send A successful\n");
 	}
-	else{ //other rank
-
-		MPI_Recv(&matrizbufA[0],partrow*colA, MPI_INT, 0, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-		printf("received matrix A from rank %d\n",rank);
-
-		//multiplication in other rank
-		printf("Start multiplication!\n");
-		for(i=0;i<partrow;i++){ //shift down row in A
-			for(j=0; j < rowB; j++){ //shift down row in B
+	else
+	{ 
+		//El resto de procesadores que no sean root esperan a recibir la parte que les corresponde de la matriz A
+		MPI_Recv(&matrizbufA[0],nRows*colA, MPI_INT, 0, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+		//Simnplemnete se multiplica teniendo en cuenta la cantidad de filas le corresponde
+		for(i=0;i<nRows;i++)
+		{
+			for(j=0; j < rowB; j++)
+			{ 
 				sum = 0;
-				for(k = 0 ; k < colA; k++){
+				for(k = 0 ; k < colA; k++)
 					sum+=matrizbufA[(i*colA)+k]*matrizB[(j*colA)+k];
-				}
 				matrizbufC[(i*rowB)+j]=sum;
 			}
 		}
-
-		printf("finish multiplication in rank %d\n",rank);
-
-		MPI_Send(&matrizbufC[0],partrow*rowB, MPI_INT, 0, 123, MPI_COMM_WORLD);
-		printf("Send bufC! from rank %d\n",rank);
-
+		//Una vez terminado la multiplicacion lo que hara es enviar al proceso root las filas que ha obtenido tras la multiplicacion
+		MPI_Send(&matrizbufC[0],nRows*rowB, MPI_INT, 0, 666, MPI_COMM_WORLD);
+		//Liberacion de los dos buffers temporales que se crean para los procesadores que no son root
 		free(matrizbufA);
 		free(matrizbufC);
 	}
 
-	if(rank==0) //rank 0
+	if(myrank==0) //rank 0
 	{
-		//multiplication in rank 0
-		printf("Start multiplication! rank 0\n");
-		for(i=0;i<partrow;i++){
-			for(j=0; j < rowB; j++){
+		//Simnplemnete se multiplica teniendo en cuenta la cantidad de filas le corresponde
+		for(i=0;i<nRows;i++)
+		{
+			for(j=0; j < rowB; j++)
+			{
 				sum = 0;
-				for(k = 0 ; k < colA; k++){
+				for(k = 0 ; k < colA; k++)
 					sum+=matrizA[(i*colA)+k]*matrizB[(j*colA)+k];
-				}
 				matrizres[(i*rowB)+j]=sum;
 			}
 		}
-		printf("finish multiplication in rank %d\n",rank);
-
-		if (fracrow!=0)
+		if (restodematriz!=0)//Se comprueba haber si despues de repartir la matriz queda alguna fila que no se haya realizado la operación
 		{
-		printf("hey");
-			//fraction multiplication in rank 0
-			for(i=partrow*size;i<(partrow*size)+fracrow;i++){
-				for(j=0; j < rowB; j++){
+			//Multiplicacion sobre todas las filas en las que no se ha hecho ninguna operación
+			//Nota: Tiene un problema,  si las filas es menor al numero de procesadores que van a ejecutar la matriz todo vendrá aqui y es el procesador root el que hará la multiplicación
+			for(i=nRows*size;i<(nRows*size)+restodematriz;i++)
+			{
+				for(j=0; j < rowB; j++)
+				{
 					sum = 0;
-					for(k = 0 ; k < colA; k++){
+					for(k = 0 ; k < colA; k++)
 						sum+=matrizA[(i*colA)+k]*matrizB[(j*colA)+k];
-					}
 					matrizres[(i*rowB)+j]=sum;
 				}
 			}
-			printf("End frac mul\n");
 		}
-
+		//Se libera el espacio de las matrices
 		free(matrizA);
 		free(matrizB);
 
-		for (i=1; i<size; i++) { //other PART from other rank
-			MPI_Recv(&matrizres[partrow*rowB*i],partrow*rowB, MPI_INT, i, 123, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-		}
-
+		//Se recibe todos los resultados obtenidos en el resto de procesadores
+		for (i=1; i<size; i++) 
+			MPI_Recv(&matrizres[nRows*rowB*i],nRows*rowB, MPI_INT, i, 666, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+		//Tiempo final en el que ya se ha hecho toda la multiplicacion
 		t1 = MPI_Wtime();
 
-		//write file
-		resfile = fopen(resfilename,"w+");
-		fprintf(resfile,"%d %d",rowA,rowB);
-		fprintf(resfile, "\n");
+		//Escritura del resultado en el fichero
+		fileC = fopen(resfilename,"w");
+		fprintf(fileC,"%d %d",rowA,rowB);
+		fprintf(fileC, "\n");
 		for(i=0;i<rowA;i++){
 			for(j=0;j<rowB;j++)
-				fprintf(resfile, "%d ",matrizres[(i*rowB)+j]);
-			fprintf(resfile, "\n");
+				fprintf(fileC, "%d ",matrizres[(i*rowB)+j]);
+			fprintf(fileC, "\n");
 		}
 		free(matrizres);
-
-		fclose(resfile);
+		fclose(fileC);
 		printf("Se ha guardado el resultado en el fichor %s.\n", resfilename);
-
 		printf("Tiempo que que ha durado la comunicación más la multiplicación de la matriz : %1.3f msec\n", (t1 - t0)*1000);
 	}
-
 	MPI_Finalize();
 	return 0;
 }

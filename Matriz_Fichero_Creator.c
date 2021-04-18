@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
         return -1;
     }
     escribirSobreFichero();
+    //cierre de los ficheros creados
     fclose(fichero1);
     fclose(fichero2);
     printf("Proceso completado \n");
@@ -33,18 +34,21 @@ int main(int argc, char *argv[])
     free(matriz2);
     return 0;
 }
-
+//Funcion que se encarga de reservar memoria para las matrices y ademas les da valores
 void inicializar()
-{
+{   
+    //Reserva de memoria
     matriz1=(int *)malloc(N1*M1*sizeof(int));
     matriz2=(int *)malloc(N2*M2*sizeof(int));
     int i,j;
+    //Inicializacion de la matriz A
     for(i=0;i<N1;i++)
         for(j=0;j<M1;j++)
         {
             matriz1[i*M1+j] = -100 + rand() % 201;
            
         }
+    //Inicializacion de la matriz B
     for(i=0;i<N2;i++)
         for(j=0;j<M2;j++)
         {
@@ -52,7 +56,7 @@ void inicializar()
            
         }
 }
-
+//Función que se encarga de guardar las matrices en un fichero cada uno
 void escribirSobreFichero()
 {
     int i,j;
@@ -64,6 +68,7 @@ void escribirSobreFichero()
     fprintf(fichero2,"\n");
     fprintf(fichero2,"%d",M2);
     fprintf(fichero2,"\n");
+    //Guardar en el primer fichero la primera matriz
     for(i=0;i<N1;i++)
     {
         for(j=0;j<M1;j++)
@@ -72,6 +77,7 @@ void escribirSobreFichero()
             fprintf(fichero1,"\n");
         }
     }
+    //Guardar en el segundo fichero la primera segunda
     for(i=0;i<N2;i++)
     {
         for(j=0;j<M2;j++)
