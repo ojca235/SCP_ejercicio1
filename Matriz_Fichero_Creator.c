@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <unistd.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 
-#define N1 100 //numero de filas de la matiz1
-#define M1 100 //numero de columnas de la matriz1
-#define N2 100 //numero de filas de la matiz2
-#define M2 100 //numero de columnas de la matriz2
-int matriz1[N1][M1];
-int matriz2[N2][M2];
+#define N1 1000 //numero de filas de la matiz1
+#define M1 1000 //numero de columnas de la matriz1
+#define N2 1000 //numero de filas de la matiz2
+#define M2 1000 //numero de columnas de la matriz2
+int *matriz1 = NULL;
+int *matriz2 = NULL;
+
 FILE* fichero1;
 FILE* fichero2;
 
@@ -27,23 +28,27 @@ int main(int argc, char *argv[])
     escribirSobreFichero();
     fclose(fichero1);
     fclose(fichero2);
-    printf("Proceso completado");
+    printf("Proceso completado \n");
+    free(matriz1);
+    free(matriz2);
     return 0;
 }
 
 void inicializar()
 {
+    matriz1=(int *)malloc(N1*M1*sizeof(int));
+    matriz2=(int *)malloc(N2*M2*sizeof(int));
     int i,j;
     for(i=0;i<N1;i++)
         for(j=0;j<M1;j++)
         {
-            matriz1[i][j] = -10000 + rand() % 20001;
+            matriz1[i*M1+j] = -100 + rand() % 201;
            
         }
     for(i=0;i<N2;i++)
         for(j=0;j<M2;j++)
         {
-            matriz2[i][j] = -10000 + rand() % 20001;
+            matriz2[i*M2+j] = -100 + rand() % 201;
            
         }
 }
@@ -63,7 +68,7 @@ void escribirSobreFichero()
     {
         for(j=0;j<M1;j++)
         {
-            fprintf(fichero1,"%d",matriz1[i][j]);
+            fprintf(fichero1,"%d",matriz1[i*M1+j]);
             fprintf(fichero1,"\n");
         }
     }
@@ -71,7 +76,7 @@ void escribirSobreFichero()
     {
         for(j=0;j<M2;j++)
         {
-            fprintf(fichero2,"%d",matriz2[i][j]);
+            fprintf(fichero2,"%d",matriz2[i*M2+j]);
             fprintf(fichero2,"\n");
         }
     }
