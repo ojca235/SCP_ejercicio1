@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 			fscanf(fileB, "%d %d",&rowB,&colB);//Leemos del segundo fichero sus dimendsiones
 			if (colA!=rowB)//Comprobacion de que la columna de la primera matriz A sea igual a la de la matriz B para poder multiplicar
 			{
-				printf("Las matrices que se estan intentado multiplicar no es posible multiplicarlas, la razón es que columna de matriz1 es %d y las filas de la matriz2 es.\n",colA,rowB);
+				printf("Las matrices que se estan intentado multiplicar no es posible multiplicarlas, la razón es que columna de matriz1 es %d y las filas de la matriz2 es %d.\n",colA,rowB);
 				return 0;
 			}
 			else
