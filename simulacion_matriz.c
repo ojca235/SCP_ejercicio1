@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 	FILE *fileA;
 	FILE *fileB;
 	FILE *fileC;
-	char *fileAname= "matrizA.txt",*fileBname= "matrizB.txt",*resfilename= "MPI_matriz_res.txt";
+	char *fileAname= "matrizA.txt",*fileBname= "matrizB.txt",*resfilename= "Matriz_res.txt";
 	char * line = NULL;
 	size_t len = 0;
 	ssize_t read;
