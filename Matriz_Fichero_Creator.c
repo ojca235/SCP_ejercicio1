@@ -18,8 +18,8 @@ int main(int argc, char *argv[])
 {
     srand(time(NULL)); 
     inicializar();
-    fichero1 = fopen("matriz1.txt", "w");
-    fichero2 = fopen("matriz2.txt", "w");
+    fichero1 = fopen("matrizA.txt", "w");
+    fichero2 = fopen("matrizB.txt", "w");
     if (fichero1==NULL || fichero2==NULL)
     {
         printf("error al intentar abrir el fichero\n");

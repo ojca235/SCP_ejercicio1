@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 	FILE *fileA;
 	FILE *fileB;
 	FILE *fileC;
-	char *fileAname= "matrizA.txt",*fileBname= "matrizA.txt",*resfilename= "MPI_matriz_res.txt";
+	char *fileAname= "matrizA.txt",*fileBname= "matrizB.txt",*resfilename= "MPI_matriz_res.txt";
 	char * line = NULL;
 	size_t len = 0;
 	ssize_t read;
@@ -22,9 +22,9 @@ int main(int argc, char *argv[])
     int i,j;
     fileA = fopen(fileAname,"r");
     fileB = fopen(fileBname,"r");
-    fileC = fopen(resfilename,"w");
+    fileC = fopen(resfilename,"w+");
     //Comprobacion de que todos los ficheros se han abierto bien
-    if (fileA==NULL || fileB==NULL || fileC==NULL)
+    if (!fileA || !fileB || !fileC)
     {
         printf("error al intentar abrir el fichero\n");
         return -1;

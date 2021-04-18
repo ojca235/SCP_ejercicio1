@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 	FILE *fileA;
 	FILE *fileB;
 	FILE *fileC;
-	char *fileAname= "matriz1.txt",*fileBname= "matriz2.txt",*resfilename= "MPI_matriz_res.txt";
+	char *fileAname= "matrizA.txt",*fileBname= "matrizA.txt",*resfilename= "MPI_matriz_res.txt";
 	int myrank, size;
 	int colA,rowA,colB,rowB;
 	int nRows,restodematriz;
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
 		free(matrizres);
 		fclose(fileC);
 		printf("Se ha guardado el resultado en el fichor %s.\n", resfilename);
-		printf("Tiempo que que ha durado la comunicación más la multiplicación de la matriz : %1.3f msec\n", (t1 - t0)*1000);
+		printf("Tej + Comunicaciones : %1.3f msec\n", (t1 - t0)*1000);
 	}
 	MPI_Finalize();
 	return 0;
