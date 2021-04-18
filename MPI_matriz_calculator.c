@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 	FILE *fileA;
 	FILE *fileB;
 	FILE *fileC;
-	char *fileAname= "matrizA.txt",*fileBname= "matrizA.txt",*resfilename= "MPI_matriz_res.txt";
+	char *fileAname= "matrizA.txt",*fileBname= "matrizB.txt",*resfilename= "MPI_matriz_res.txt";
 	int myrank, size;
 	int colA,rowA,colB,rowB;
 	int nRows,restodematriz;
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 		fileB = fopen(fileBname,"r");
 		if(fileA==NULL || fileB==NULL) // Se comprueba que no haya habido ningun error al abrir los ficheros
 		{
-			printf("No se ha encontrado el fichero matriz1.txt o matriz2.txt, asegurese de haber ejecutado el programa que genera matrices.\n");
+			printf("No se ha encontrado el fichero matrizA.txt o matrizB.txt, asegurese de haber ejecutado el programa que genera matrices.\n");
 			return 0;
 		}
 		else
@@ -152,6 +152,7 @@ int main(int argc, char *argv[])
 				{
 					sum = 0;
 					for(k = 0 ; k < colA; k++)
+
 						sum+=matrizA[(i*colA)+k]*matrizB[(j*colA)+k];
 					matrizres[(i*rowB)+j]=sum;
 				}
